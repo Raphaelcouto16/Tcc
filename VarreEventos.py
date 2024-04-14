@@ -20,6 +20,7 @@ def extrair_informacoes_eventos(url):
     dados_eventos = []
     for evento in eventos:
         link = evento['href']
+        tipo = evento.find('span', class_='chip').text
         nome_evento = evento.find('h4').text
         escola_e_area = evento.find_all('small', class_='school')
         escola = escola_e_area[0].text
@@ -28,6 +29,7 @@ def extrair_informacoes_eventos(url):
 
         dados_eventos.append({
             'Link': link,
+            'Tipo': tipo,
             'Nome do Evento': nome_evento,
             'Escola': escola,
             'Área': area,
@@ -37,10 +39,32 @@ def extrair_informacoes_eventos(url):
     return dados_eventos
 
 # URL do site da universidade
-url_universidade = 'https://unisinos.br/lab/cursos/'
+dados_eventos = []
+
+url_universidade = 'https://unisinos.br/lab/cursos-extensao'
 
 # Extrair informações dos eventos
-dados_eventos = extrair_informacoes_eventos(url_universidade)
+dados_eventos += extrair_informacoes_eventos(url_universidade)
+
+url_universidade = 'https://unisinos.br/lab/eventos'
+
+# Extrair informações dos eventos
+dados_eventos += extrair_informacoes_eventos(url_universidade)
+
+url_universidade = 'https://unisinos.br/lab/cursos?inscricoes_abertas=1&escola=todas&modalidade=todas&localidade=todas&atividades=4&somente_gratuitos=0&_gl=1*1bkwk4s*_ga*MTQzOTU1MDM3Ni4xNzA5NjAxMzI3*_ga_H36YE46SVB*MTcxMzExMTMwOS4xNC4xLjE3MTMxMTE4NjguNTQuMC4w'
+
+# Extrair informações dos eventos
+dados_eventos +=  extrair_informacoes_eventos(url_universidade)
+
+url_universidade = 'https://unisinos.br/lab/cursos?inscricoes_abertas=1&escola=todas&modalidade=todas&localidade=todas&atividades=10&competencias=100&somente_gratuitos=0'
+
+# Extrair informações dos eventos
+dados_eventos +=  extrair_informacoes_eventos(url_universidade)
+
+url_universidade = 'https://unisinos.br/lab/cursos?inscricoes_abertas=1&escola=todas&modalidade=todas&localidade=todas&atividades=6&somente_gratuitos=0&_gl=1*1pd255y*_ga*MTQzOTU1MDM3Ni4xNzA5NjAxMzI3*_ga_H36YE46SVB*MTcxMzExMTMwOS4xNC4xLjE3MTMxMTI0ODMuMjUuMC4w'
+
+# Extrair informações dos eventos
+dados_eventos +=  extrair_informacoes_eventos(url_universidade)
 
 # Verificar se há dados para armazenar
 if dados_eventos:

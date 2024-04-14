@@ -2,6 +2,7 @@ import pandas as pd
 from bs4 import BeautifulSoup
 import requests
 import time
+import psycopg2
 
 # Função para adicionar informações adicionais ao evento
 def adicionar_informacoes_adicionais(df_eventos):
@@ -21,6 +22,14 @@ def adicionar_informacoes_adicionais(df_eventos):
     df_eventos['Local'] = ''
     df_eventos['Certificado'] = ''
     df_eventos['Competências'] = ''
+    
+    conn = psycopg2.connect(
+    dbname="projetotcc",
+    user="projetotcc",
+    password="TryTiR@1309927",
+    host="179.188.16.157"
+    )
+    cur = conn.cursor()
 
     for index, evento in df_eventos.iterrows():
         # Acessar o link do evento
@@ -36,10 +45,13 @@ def adicionar_informacoes_adicionais(df_eventos):
                 for div_info in panel_div.find_all('div', class_='group-info-panel'):
                     title_tag = div_info.find('small', class_='title')
                     values = div_info.find_all('small')
-                    if title_tag is not None and title_tag.string == 'Horários':
-                        value_tag = (values[1].string + ' ate ' + values[2].string) if len(values) > 1 else None  
+                    if values:
+                        if title_tag is not None and title_tag.string == 'Horários' and len(values) >= 2:
+                            value_tag = (values[1].string + ' até ' + values[2].string) if len(values) > 2 else None  
+                        else:
+                            value_tag = values[1].string if len(values) > 1 else None
                     else:
-                        value_tag = values[1].string if len(values) > 1 else None  
+                        value_tag = None
 
                     if title_tag and value_tag:
                         title = title_tag.string
@@ -91,7 +103,8 @@ def adicionar_informacoes_adicionais(df_eventos):
 
             
             
-            local_tag = soup.find('div', class_='text-extra').find('small', text='Local')
+            local_tag = soup.find('div', class_='text-extra').find(lambda tag: tag.name == 'small' and tag.text == 'Local')
+            # local_tag = soup.find('div', class_='text-extra').find('small', text='Local')
             local = local_tag.find_next('span').text if local_tag else 'Não encontrado'
             
             certificado_tag = soup.find('div', class_='text-extra').find('small', text='Certificado')
@@ -113,12 +126,38 @@ def adicionar_informacoes_adicionais(df_eventos):
             
             print(f'Informações adicionais do evento {evento["Nome do Evento"]} adicionadas.')
             
+            cur.execute("""
+                INSERT INTO eventos (link, nome_do_evento, periodo_da_atividade, horarios, periodo_de_inscricao, investimento, sobre, objetivos, programacao, pre_requisitos, ministrante, promocao, apoio, local, certificado, competencias)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """, (
+                evento['Link'][:255].strip(),
+                evento['Nome do Evento'][:255].strip(),
+                df_eventos.at[index, 'Período da atividade'][:255].strip(),
+                df_eventos.at[index, 'Horários'][:255].strip(),
+                df_eventos.at[index, 'Período de inscrição'][:255].strip(),
+                df_eventos.at[index, 'Investimento'][:100].strip(),
+                df_eventos.at[index, 'Sobre'],
+                df_eventos.at[index, 'Objetivos'],
+                df_eventos.at[index, 'Programação'],
+                df_eventos.at[index, 'Pré-requisitos'],
+                df_eventos.at[index, 'Ministrante'],
+                df_eventos.at[index, 'Promoção'],
+                df_eventos.at[index, 'Apoio'],
+                df_eventos.at[index, 'Local'][:255],
+                df_eventos.at[index, 'Certificado'][:100],
+                df_eventos.at[index, 'Competências'][:255]
+            ))
+            print(f'Informações do evento {evento["Nome do Evento"]} adicionadas ao banco de dados.')
+            # Commit para salvar as alterações
+            conn.commit()
+            
+            
+            
             # esperar 1 segundo para não sobrecarregar o site
             time.sleep(2)
        
-            
-            
-
+    # Fechar a conexão com o banco de dados
+    conn.close()
     return df_eventos
 
 # Ler o arquivo CSV com os eventos
