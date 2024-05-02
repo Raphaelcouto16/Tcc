@@ -25,11 +25,13 @@ eventos_encontrados = 0
 
 # Para cada evento, encontrar cursos associados com a quantidade de caracteres mais próximos ou iguais ao nome do evento
 for index, evento in eventos_df.iterrows():
-    nome_evento = evento['nome_do_evento']
+    #upper para comparar strings
+    
+    nome_evento = evento['nome_do_evento'].upper()
     area_evento = evento['area']
 
     # Filtrar cursos com a quantidade de caracteres mais próximos ou iguais ao nome do evento
-    cursos_filtrados = cursos_df[cursos_df["nome"].apply(lambda x: fuzz.partial_ratio(x, nome_evento)) >= limiar_similaridade]
+    cursos_filtrados = cursos_df[cursos_df["nome"].apply(lambda x: fuzz.partial_ratio(x.upper(), nome_evento)) >= limiar_similaridade]
 
     # Se houver cursos filtrados, imprima-os
     if not cursos_filtrados.empty:
