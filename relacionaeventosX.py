@@ -62,11 +62,19 @@ def recommend_events(aluno_keywords_agg, evento_keywords_agg):
     
     return recommendations
 
+# # Inserir recomendações na tabela alunos_eventos
+# def insert_recommendations(conn, recommendations):
+#     insert_query = "INSERT INTO public.alunos_eventos (id_aluno, id_evento) VALUES %s"
+#     cursor = conn.cursor()
+#     execute_values(cursor, insert_query, recommendations)
+#     conn.commit()
+    
 # Inserir recomendações na tabela alunos_eventos
 def insert_recommendations(conn, recommendations):
-    insert_query = "INSERT INTO public.alunos_eventos (id_aluno, id_evento) VALUES %s"
+    insert_query = "INSERT INTO public.alunos_eventos (id_aluno, id_evento) SELECT %s, %s WHERE NOT EXISTS (SELECT 1 FROM public.alunos_eventos WHERE id_aluno = %s AND id_evento = %s)"
     cursor = conn.cursor()
-    execute_values(cursor, insert_query, recommendations)
+    for recommendation in recommendations:
+        cursor.execute(insert_query, (recommendation[0], recommendation[1], recommendation[0], recommendation[1]))
     conn.commit()
 
 # Função principal
