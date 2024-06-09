@@ -23,8 +23,6 @@ def extract_data(conn):
     query_palavras_chave = "SELECT * FROM public.palavras_chave"
     
     
-    
-
     df_alunos = pd.read_sql(query_alunos, conn)
     df_aluno_palavras_chaves = pd.read_sql(query_aluno_palavras_chaves, conn)
     df_evento_palavras_chaves = pd.read_sql(query_evento_palavras_chaves, conn)
@@ -36,6 +34,10 @@ def extract_data(conn):
 def preprocess_data(df_alunos, df_aluno_palavras_chaves, df_evento_palavras_chaves, df_palavras_chave):
     aluno_keywords = df_aluno_palavras_chaves.merge(df_palavras_chave, left_on='id_palavra', right_on='id_palavra')
     evento_keywords = df_evento_palavras_chaves.merge(df_palavras_chave, left_on='id_palavra', right_on='id_palavra')
+    
+    # Converter todas as palavras para maiúsculas
+    aluno_keywords['palavra'] = aluno_keywords['palavra'].str.upper()
+    evento_keywords['palavra'] = evento_keywords['palavra'].str.upper()
     
     aluno_keywords_agg = aluno_keywords.groupby('id_aluno')['palavra'].apply(lambda x: ' '.join(x)).reset_index()
     evento_keywords_agg = evento_keywords.groupby('id_evento')['palavra'].apply(lambda x: ' '.join(x)).reset_index()
